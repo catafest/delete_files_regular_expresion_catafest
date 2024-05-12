@@ -18,6 +18,10 @@ class FileListApp(QMainWindow):
         self.folder_button.clicked.connect(self.select_folder)
         self.layout.addWidget(self.folder_button)
 
+        self.system_button = QPushButton("Selectează curătare system")
+        self.system_button.clicked.connect(self.system_clean)
+        self.layout.addWidget(self.system_button)
+
         self.folder_path_edit = QLineEdit()
         self.layout.addWidget(self.folder_path_edit)
 
@@ -47,6 +51,10 @@ class FileListApp(QMainWindow):
         folder_path = QFileDialog.getExistingDirectory(self, "Selectează Folder")
         if folder_path:
             self.folder_path_edit.setText(folder_path)
+    def system_clean(self):
+        # deschide fisier csv si citeste paths pentru curatare
+        #system_folders_path = csv_item
+        pass
 
     def load_files(self):
         folder_path = self.folder_path_edit.text()
