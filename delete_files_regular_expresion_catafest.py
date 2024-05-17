@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import QCheckBox, QListWidgetItem, QHBoxLayout, QFileDialog
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
+import searchFiles
+
 # NOTA:
 # Am pastrat avertizarea aceasta :
 # SyntaxWarning: invalid escape sequence '\.'  template_list = ['^test.*\.py$', '^test.*\.txt$']
@@ -137,6 +139,7 @@ class FileListApp(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    searcher = searchFiles.FileSearcher(".*\.txt") 
     window = FileListApp()
     window.show()
     sys.exit(app.exec())
