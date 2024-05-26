@@ -3,14 +3,17 @@ import os
 import re
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QListWidget,QFrame,QCompleter,QListView
-from PyQt6.QtWidgets import QCheckBox, QListWidgetItem, QHBoxLayout, QFileDialog, QLineEdit,QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QListWidgetItem, QHBoxLayout, QFileDialog, QLineEdit,QVBoxLayout,QLabel,QComboBox
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt,QSize
 
 # NOTA:
+# VERIFICA INTOTDEAUNA LISTA DE FISIERE INAINTE DE STERGEREA DE PE HDD
 # Am pastrat avertizarea aceasta :
-# SyntaxWarning: invalid escape sequence '\.'  template_list = ['^test.*\.py$', '^test.*\.txt$']
-# Ar fi trebuit să folosim dublul caracter de escape \\ pentru a reprezenta un singur caracter \ pentru a nu avea acesta avertizare
+# SyntaxWarning: invalid escape sequence '\.'  template_list = ['^test.*\.py$', '^test.*\.txt$'] 
+# Codul sursa nu este testat 100% 
+# Am gasit neconcordante la unele expresii regulate si selectii de dropdown buton 
+# Ar fi trebuit să folosim dublul caracter de escape \\ pentru a reprezenta un singur caracter \ pentru a nu avea aceasta avertizare
 # insa nu ar mai fi afisata corect expresia regulata si nu sunt sigur ca ar functiona in toate cazurile mai complexe
 
 class FileListApp(QMainWindow):
@@ -20,18 +23,24 @@ class FileListApp(QMainWindow):
         self.setWindowTitle("clean and delete")
         # Se creează un QFrame pentru bara de titlu
         self.title_bar = QFrame()
-        self.title_bar.setFixedHeight(640)  # Setează înălțimea dorită
+        self.title_bar.setFixedHeight(1080)  # Setează înălțimea dorită
         clean_delete_icon_path = QIcon("icon_clean_delete_re.svg")
         self.setWindowIcon(clean_delete_icon_path)
-        self.setGeometry(100, 100, 500, 400)
+        self.setGeometry(100, 100, 1280, 860)
         
         # Se creează o listă de șabloane (poți înlocui cu propriile șabloane)
-        template_list = ['^test.*\.py$', '^test.*\.txt$']
+        template_list = ['^test*\.py$', '^test*\.txt$']
         # Creează dicționarul pentru asocieri între șabloane și texte de tooltip
         self.tooltip_dict = {
-            '^test.*\.py$': "fișierele care încep cu 'test' și se termină cu extensia: '.py'",
-            '^test.*\.txt$': "fișierele care încep cu 'test' și se termină cu extensia: '.txt'",
+            '^test*\.py$': "fișierele care încep cu 'test' și se termină cu extensia: '.py'",
+            '^test*\.txt$': "fișierele care încep cu 'test' și se termină cu extensia: '.txt'",
+            '^0{3}[A-Za-z0-9]*\.tmp$':"fisiere de tip '000...*' și se termină cu extensia: '.tmp' generate de tool backup NOD32 "
         }
+        # Creează un QComboBox
+        self.dropdown = QComboBox()
+        for key, description in self.tooltip_dict.items():
+            combined_text = f"{key} - {description}"
+            self.dropdown.addItem(combined_text)
 
         # Creează un QCompleter cu lista de șabloane
         completer = QCompleter(template_list, self)
@@ -42,44 +51,64 @@ class FileListApp(QMainWindow):
         self.file_list = QListWidget()
         left_layout = QVBoxLayout()
         left_layout.addWidget(self.file_list)
-
         # Se creează un QHBoxLayout pentru butoane (dreapta)
         self.folder_button = QPushButton("Selectează Folder")
         self.folder_button.clicked.connect(self.select_folder)
+        folder_select = QIcon("folder-svgrepo-com.svg")
+        self.folder_button.setIcon(folder_select)
 
         self.system_button = QPushButton("Selectează curățare sistem")
         self.system_button.clicked.connect(self.system_clean)
 
-        self.folder_path_edit = QLineEdit()
+        # Label informativ cale folder
+        self.label_folder = QLabel("Cale folder in care se cauta : ")
 
+        self.folder_path_edit = QLineEdit()
         # Creează un QListView personalizat pentru a afișa sugestiile
         custom_list_view = QListView()
         completer.setPopup(custom_list_view)
 
+        # Label informativ expresie tip RE
+        self.label_RE = QLabel("Expresie regulata cautare nume fisier : ")
+        # Label informativ expresie tip RE
+        self.label_NOTA1 = QLabel("ATENTIE: Verifica fisierele din lista INAINTE DE STERGERE!")
+        self.label_NOTA2 = QLabel("AM gasit neconcordante la mai multe selectii - buton dropdown cu RE txt")
+        self.label_NOTA3 = QLabel("NU a gasit fisierele la un singur folder fara recursivitate")
+        self.label_NOTA4 = QLabel("Codul sursa rulat nu este testat 100% ")
         # Creează un QLineEdit și asociază QCompleter-ul
         self.regex_edit = QLineEdit()
-        self.regex_edit.setCompleter(completer)
+        self.regex_edit.setCompleter(self.dropdown.completer())
+
         # Conectează semnalul QCompleter.activated la metoda show_tooltip
-        completer.activated.connect(self.show_tooltip)
+        self.dropdown.activated.connect(self.show_tooltip)
 
         self.load_files_button = QPushButton("Încarcă Fișiere")
         self.load_files_button.clicked.connect(self.load_files)
-
-        self.delete_selected_button = QPushButton("ȘTERGE !!! Fișierele selectate din listă")
-        self.delete_selected_button.clicked.connect(self.delete_selected_files)
-        icon_delete = QIcon("delete.svg")
-        self.delete_selected_button.setIcon(icon_delete)
 
         self.clear_list_button = QPushButton("Șterge fișierele din listă!")
         self.clear_list_button.clicked.connect(self.clear_list)
         icon_attention = QIcon("attention.svg")
         self.clear_list_button.setIcon(icon_attention)
 
+        self.delete_selected_button = QPushButton("ȘTERGE !!! Fișierele de pe HDD!")
+        # Setează geometria (poziție și dimensiune) butonului
+        self.delete_selected_button.setIconSize(QSize(32, 32))
+        self.delete_selected_button.clicked.connect(self.delete_selected_files)
+        icon_delete = QIcon("delete.svg")
+        self.delete_selected_button.setIcon(icon_delete)
+
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.folder_button)
         right_layout.addWidget(self.system_button)
+        right_layout.addWidget(self.label_folder)
         right_layout.addWidget(self.folder_path_edit)
+        right_layout.addWidget(self.label_RE)
+        right_layout.addWidget(self.label_NOTA1)
+        right_layout.addWidget(self.label_NOTA2)
+        right_layout.addWidget(self.label_NOTA3)
+        right_layout.addWidget(self.label_NOTA4)
         right_layout.addWidget(self.regex_edit)
+        right_layout.addWidget(self.dropdown)
         right_layout.addWidget(self.load_files_button)
         right_layout.addWidget(self.delete_selected_button)
         right_layout.addWidget(self.clear_list_button)
@@ -129,10 +158,11 @@ class FileListApp(QMainWindow):
     def clear_list(self):
         self.file_list.clear()
 
-    def show_tooltip(self, selected_text):
-        # Obține textul corespunzător din dicționarul tooltip_dict
-        tooltip_text = self.tooltip_dict.get(selected_text, "")
-        # Afișează QToolTip atașat la QLineEdit
+    def show_tooltip(self, index):
+        selected_text = self.dropdown.itemText(index)
+        key, _ = selected_text.split(" - ", 1)
+        self.regex_edit.setText(key)
+        tooltip_text = self.tooltip_dict.get(key, "")
         self.regex_edit.setToolTip(tooltip_text)
 
 if __name__ == "__main__":
