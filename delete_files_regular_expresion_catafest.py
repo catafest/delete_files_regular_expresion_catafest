@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import QCheckBox, QListWidgetItem, QHBoxLayout, QFileDialog
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt,QSize
 
+import searchFiles
+
 # NOTA:
 # VERIFICA INTOTDEAUNA LISTA DE FISIERE INAINTE DE STERGEREA DE PE HDD
 # Am pastrat avertizarea aceasta :
@@ -167,6 +169,7 @@ class FileListApp(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    searcher = searchFiles.FileSearcher(".*\.txt") 
     window = FileListApp()
     window.show()
     sys.exit(app.exec())
